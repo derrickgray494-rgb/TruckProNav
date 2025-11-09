@@ -285,19 +285,25 @@ class MapViewController: UIViewController {
     }
 
     @objc private func recenterMap() {
-        guard let userLocation = locationManager.location?.coordinate else { return }
+        // Resume camera following mode for free-drive
+        if !isNavigating {
+            navigationMapView.navigationCamera.update(cameraState: .following)
+            print("📍 Camera following user bearing")
+        } else {
+            // During navigation, just recenter manually
+            guard let userLocation = locationManager.location?.coordinate else { return }
 
-        let cameraOptions = CameraOptions(
-            center: userLocation,
-            padding: UIEdgeInsets(top: 0, left: 0, bottom: view.bounds.height * 0.4, right: 0),
-            zoom: 17,
-            bearing: lastBearing,
-            pitch: 60
-        )
+            let cameraOptions = CameraOptions(
+                center: userLocation,
+                padding: UIEdgeInsets(top: 0, left: 0, bottom: view.bounds.height * 0.4, right: 0),
+                zoom: 17,
+                bearing: lastBearing,
+                pitch: 60
+            )
 
-        // Smoother camera animation with longer duration and easeInOut curve
-        navigationMapView.mapView.camera.ease(to: cameraOptions, duration: 1.5, curve: .easeInOut, completion: nil)
-        print("📍 Map recentered to current location")
+            navigationMapView.mapView.camera.ease(to: cameraOptions, duration: 1.5, curve: .easeInOut, completion: nil)
+            print("📍 Map recentered to current location")
+        }
     }
 
     private func setupSettingsButton() {
@@ -362,6 +368,9 @@ class MapViewController: UIViewController {
         navigationProvider.tripSession().startFreeDrive()
         isFreeDriveActive = true
 
+        // Enable camera to follow user bearing (heading direction)
+        navigationMapView.navigationCamera.update(cameraState: .following)
+
         // Only create subscription once
         if cancelables.isEmpty {
             // Subscribe to location matching for speed limit and road name
@@ -389,7 +398,7 @@ class MapViewController: UIViewController {
             }.store(in: &cancelables)
         }
 
-        print("🆓 Free-drive mode started - speed limits and road names enabled")
+        print("🆓 Free-drive mode started - camera following user bearing")
     }
 
     // MARK: - Route Preview UI
