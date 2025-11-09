@@ -24,6 +24,16 @@
 	<key>TomTomAPIKey</key>
 	<string>Nq78WMNfPT4Xvm8jV7KiYGp6nb55VDkO</string>
 
+	<!-- Supabase Configuration (Add your credentials here) -->
+	<key>SupabaseURL</key>
+	<string>YOUR_SUPABASE_URL_HERE</string>
+	<key>SupabaseAnonKey</key>
+	<string>YOUR_SUPABASE_ANON_KEY_HERE</string>
+
+	<!-- RevenueCat Configuration (Add your API key here) -->
+	<key>RevenueCatAPIKey</key>
+	<string>YOUR_REVENUECAT_API_KEY_HERE</string>
+
 	<!-- Background Modes -->
 	<key>UIBackgroundModes</key>
 	<array>
