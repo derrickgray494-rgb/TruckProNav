@@ -5,8 +5,16 @@
 
 import UIKit
 
+// MARK: - Settings Change Delegate
+
+protocol SettingsViewControllerDelegate: AnyObject {
+    func settingsDidChange()
+    func mapStyleDidChange(to style: TruckSettings.MapStyle)
+}
+
 class SettingsViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
 
+    weak var delegate: SettingsViewControllerDelegate?
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
 
     private enum SettingsSection: Int, CaseIterable {
@@ -112,19 +120,19 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         case 0:
             let cell = tableView.dequeueReusableCell(withIdentifier: "ValueCell", for: indexPath) as! ValueTableViewCell
             cell.textLabel?.text = "Truck Height"
-            cell.valueLabel.text = "13'6\""
+            cell.valueLabel.text = TruckSettings.formattedHeight()
             cell.accessoryType = .disclosureIndicator
             return cell
         case 1:
             let cell = tableView.dequeueReusableCell(withIdentifier: "ValueCell", for: indexPath) as! ValueTableViewCell
             cell.textLabel?.text = "Truck Width"
-            cell.valueLabel.text = "8 ft"
+            cell.valueLabel.text = TruckSettings.formattedWidth()
             cell.accessoryType = .disclosureIndicator
             return cell
         case 2:
             let cell = tableView.dequeueReusableCell(withIdentifier: "ValueCell", for: indexPath) as! ValueTableViewCell
             cell.textLabel?.text = "Truck Weight"
-            cell.valueLabel.text = "80,000 lbs"
+            cell.valueLabel.text = TruckSettings.formattedWeight()
             cell.accessoryType = .disclosureIndicator
             return cell
         default:
@@ -135,25 +143,31 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
     private func configureNavigationCell(for indexPath: IndexPath) -> UITableViewCell {
         switch indexPath.row {
         case 0:
-            let cell = tableView.dequeueReusableCell(withIdentifier: "SwitchCell", for: indexPath) as! SwitchTableViewCell
-            cell.textLabel?.text = "Voice Guidance"
-            cell.switchControl.isOn = true
+            let cell = tableView.dequeueReusableCell(withIdentifier: "ValueCell", for: indexPath) as! ValueTableViewCell
+            cell.textLabel?.text = "Voice Volume"
+            cell.valueLabel.text = "\(TruckSettings.voiceVolume)%"
+            cell.accessoryType = .disclosureIndicator
             return cell
         case 1:
             let cell = tableView.dequeueReusableCell(withIdentifier: "SwitchCell", for: indexPath) as! SwitchTableViewCell
             cell.textLabel?.text = "Avoid Toll Roads"
-            cell.switchControl.isOn = false
+            cell.switchControl.isOn = TruckSettings.avoidTolls
+            cell.switchControl.tag = 1001
+            cell.switchControl.addTarget(self, action: #selector(switchValueChanged(_:)), for: .valueChanged)
             return cell
         case 2:
             let cell = tableView.dequeueReusableCell(withIdentifier: "SwitchCell", for: indexPath) as! SwitchTableViewCell
             cell.textLabel?.text = "Avoid Highways"
-            cell.switchControl.isOn = false
+            cell.switchControl.isOn = TruckSettings.avoidHighways
+            cell.switchControl.tag = 1002
+            cell.switchControl.addTarget(self, action: #selector(switchValueChanged(_:)), for: .valueChanged)
             return cell
         case 3:
-            let cell = tableView.dequeueReusableCell(withIdentifier: "ValueCell", for: indexPath) as! ValueTableViewCell
-            cell.textLabel?.text = "Route Alternatives"
-            cell.valueLabel.text = "Enabled"
-            cell.accessoryType = .disclosureIndicator
+            let cell = tableView.dequeueReusableCell(withIdentifier: "SwitchCell", for: indexPath) as! SwitchTableViewCell
+            cell.textLabel?.text = "Avoid Ferries"
+            cell.switchControl.isOn = TruckSettings.avoidFerries
+            cell.switchControl.tag = 1003
+            cell.switchControl.addTarget(self, action: #selector(switchValueChanged(_:)), for: .valueChanged)
             return cell
         default:
             return UITableViewCell()
@@ -164,18 +178,22 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         switch indexPath.row {
         case 0:
             let cell = tableView.dequeueReusableCell(withIdentifier: "SwitchCell", for: indexPath) as! SwitchTableViewCell
-            cell.textLabel?.text = "3D Buildings"
-            cell.switchControl.isOn = true
+            cell.textLabel?.text = "Hazmat Cargo"
+            cell.switchControl.isOn = TruckSettings.hazmat
+            cell.switchControl.tag = 2001
+            cell.switchControl.addTarget(self, action: #selector(switchValueChanged(_:)), for: .valueChanged)
             return cell
         case 1:
             let cell = tableView.dequeueReusableCell(withIdentifier: "SwitchCell", for: indexPath) as! SwitchTableViewCell
-            cell.textLabel?.text = "Auto Day/Night"
-            cell.switchControl.isOn = true
+            cell.textLabel?.text = "Imperial Units"
+            cell.switchControl.isOn = TruckSettings.useImperialUnits
+            cell.switchControl.tag = 2002
+            cell.switchControl.addTarget(self, action: #selector(switchValueChanged(_:)), for: .valueChanged)
             return cell
         case 2:
             let cell = tableView.dequeueReusableCell(withIdentifier: "ValueCell", for: indexPath) as! ValueTableViewCell
             cell.textLabel?.text = "Map Style"
-            cell.valueLabel.text = "Standard"
+            cell.valueLabel.text = TruckSettings.mapStyle.rawValue
             cell.accessoryType = .disclosureIndicator
             return cell
         default:
@@ -263,11 +281,31 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
 
     private func handleNavigationSetting(at row: Int) {
         switch row {
-        case 3:
-            print("⚙️ Configure route alternatives")
+        case 0:
+            print("⚙️ Adjust voice volume")
+            showVoiceVolumePicker()
         default:
             break
         }
+    }
+
+    private func showVoiceVolumePicker() {
+        let alert = UIAlertController(title: "Voice Volume", message: "Adjust navigation voice guidance volume", preferredStyle: .actionSheet)
+        for volume in [0, 25, 50, 75, 100] {
+            let action = UIAlertAction(title: "\(volume)%", style: .default) { [weak self] _ in
+                guard let self = self else { return }
+                TruckSettings.voiceVolume = volume
+                print("💾 Voice volume set to: \(volume)%")
+                self.tableView.reloadSections(IndexSet(integer: 1), with: .automatic)
+                self.delegate?.settingsDidChange()
+            }
+            if volume == TruckSettings.voiceVolume {
+                action.setValue(true, forKey: "checked")
+            }
+            alert.addAction(action)
+        }
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        present(alert, animated: true)
     }
 
     private func handleMapSetting(at row: Int) {
@@ -314,28 +352,87 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         }
     }
 
+    // MARK: - Switch Handler
+
+    @objc private func switchValueChanged(_ sender: UISwitch) {
+        switch sender.tag {
+        case 1001: // Avoid Tolls
+            TruckSettings.avoidTolls = sender.isOn
+            print("💾 Avoid tolls: \(sender.isOn)")
+        case 1002: // Avoid Highways
+            TruckSettings.avoidHighways = sender.isOn
+            print("💾 Avoid highways: \(sender.isOn)")
+        case 1003: // Avoid Ferries
+            TruckSettings.avoidFerries = sender.isOn
+            print("💾 Avoid ferries: \(sender.isOn)")
+        case 2001: // Hazmat
+            TruckSettings.hazmat = sender.isOn
+            print("💾 Hazmat cargo: \(sender.isOn)")
+        case 2002: // Imperial Units
+            TruckSettings.useImperialUnits = sender.isOn
+            print("💾 Imperial units: \(sender.isOn)")
+            // Reload truck settings to update display format
+            tableView.reloadSections(IndexSet(integer: 0), with: .none)
+        default:
+            break
+        }
+
+        delegate?.settingsDidChange()
+    }
+
     // MARK: - Helper Methods
 
     private func showTruckDimensionPicker(type: String, currentValue: String) {
-        let alert = UIAlertController(title: "Truck \(type)", message: "Current: \(currentValue)", preferredStyle: .alert)
+        let alert = UIAlertController(title: "Truck \(type)", message: "Enter value in meters\nCurrent: \(currentValue)", preferredStyle: .alert)
         alert.addTextField { textField in
-            textField.placeholder = "Enter \(type.lowercased())"
+            textField.placeholder = "Enter \(type.lowercased()) in meters"
             textField.keyboardType = .decimalPad
         }
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Save", style: .default) { _ in
-            if let value = alert.textFields?.first?.text {
-                print("💾 Saved truck \(type): \(value)")
+        alert.addAction(UIAlertAction(title: "Save", style: .default) { [weak self] _ in
+            guard let self = self, let text = alert.textFields?.first?.text, let value = Double(text) else { return }
+
+            switch type {
+            case "Height":
+                TruckSettings.height = value
+                print("💾 Saved truck height: \(value)m")
+            case "Width":
+                TruckSettings.width = value
+                print("💾 Saved truck width: \(value)m")
+            case "Weight":
+                TruckSettings.weight = value
+                print("💾 Saved truck weight: \(value)t")
+            default:
+                break
             }
+
+            self.tableView.reloadSections(IndexSet(integer: 0), with: .automatic)
+            self.delegate?.settingsDidChange()
         })
         present(alert, animated: true)
     }
 
     private func showMapStylePicker() {
-        let alert = UIAlertController(title: "Map Style", message: "Select map style", preferredStyle: .actionSheet)
-        alert.addAction(UIAlertAction(title: "Standard", style: .default))
-        alert.addAction(UIAlertAction(title: "Satellite", style: .default))
-        alert.addAction(UIAlertAction(title: "Hybrid", style: .default))
+        let alert = UIAlertController(title: "Map Style", message: "Select map appearance", preferredStyle: .actionSheet)
+
+        for style in [TruckSettings.MapStyle.auto, .day, .night] {
+            let action = UIAlertAction(title: style.rawValue, style: .default) { [weak self] _ in
+                guard let self = self else { return }
+                TruckSettings.mapStyle = style
+                print("💾 Map style changed to: \(style.rawValue)")
+
+                // Reload map section to update display
+                self.tableView.reloadSections(IndexSet(integer: 2), with: .automatic)
+
+                // Notify delegate for immediate map update
+                self.delegate?.mapStyleDidChange(to: style)
+            }
+            if style == TruckSettings.mapStyle {
+                action.setValue(true, forKey: "checked")
+            }
+            alert.addAction(action)
+        }
+
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         present(alert, animated: true)
     }

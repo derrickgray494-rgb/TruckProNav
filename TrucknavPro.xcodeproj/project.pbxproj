@@ -18,7 +18,6 @@
 		EE349A982EC06F44007EFE26 /* ReceiptParser in Frameworks */ = {isa = PBXBuildFile; productRef = EE349A972EC06F44007EFE26 /* ReceiptParser */; };
 		EE349A9A2EC06F44007EFE26 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = EE349A992EC06F44007EFE26 /* RevenueCat */; };
 		EE349A9C2EC06F44007EFE26 /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = EE349A9B2EC06F44007EFE26 /* RevenueCatUI */; };
-		EE349A9E2EC06F44007EFE26 /* RevenueCat_CustomEntitlementComputation in Frameworks */ = {isa = PBXBuildFile; productRef = EE349A9D2EC06F44007EFE26 /* RevenueCat_CustomEntitlementComputation */; };
 		EE349AD02EC08609007EFE26 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = EE349ACF2EC08609007EFE26 /* Supabase */; };
 		EE9AF7D62EBF969D00C35917 /* MapboxGeocoder in Frameworks */ = {isa = PBXBuildFile; productRef = EE9AF7D52EBF969D00C35917 /* MapboxGeocoder */; };
 		EEA2E5D02EBF2E0A007AFFE4 /* MapboxNavigationCore in Frameworks */ = {isa = PBXBuildFile; productRef = EEA2E5CF2EBF2E0A007AFFE4 /* MapboxNavigationCore */; };
@@ -105,7 +104,6 @@
 				EE349A8D2EC06E96007EFE26 /* Auth in Frameworks */,
 				EEA2E5D42EBF2E20007AFFE4 /* MapboxNavigationUIKit in Frameworks */,
 				EE349A932EC06E96007EFE26 /* Realtime in Frameworks */,
-				EE349A9E2EC06F44007EFE26 /* RevenueCat_CustomEntitlementComputation in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -193,7 +191,6 @@
 				EE349A972EC06F44007EFE26 /* ReceiptParser */,
 				EE349A992EC06F44007EFE26 /* RevenueCat */,
 				EE349A9B2EC06F44007EFE26 /* RevenueCatUI */,
-				EE349A9D2EC06F44007EFE26 /* RevenueCat_CustomEntitlementComputation */,
 				EE349ACF2EC08609007EFE26 /* Supabase */,
 			);
 			productName = TrucknavPro;
@@ -767,11 +764,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = EE349A962EC06F44007EFE26 /* XCRemoteSwiftPackageReference "purchases-ios" */;
 			productName = RevenueCatUI;
-		};
-		EE349A9D2EC06F44007EFE26 /* RevenueCat_CustomEntitlementComputation */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = EE349A962EC06F44007EFE26 /* XCRemoteSwiftPackageReference "purchases-ios" */;
-			productName = RevenueCat_CustomEntitlementComputation;
 		};
 		EE349ACF2EC08609007EFE26 /* Supabase */ = {
 			isa = XCSwiftPackageProductDependency;

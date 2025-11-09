@@ -14,7 +14,9 @@ class SupabaseService {
 
     // Current user
     var currentUser: User? {
-        return try? client.auth.session.user
+        get async {
+            return try? await client.auth.session.user
+        }
     }
 
     private init() {
@@ -196,7 +198,7 @@ class SupabaseService {
     // MARK: - Truck Settings
 
     /// Save truck configuration
-    func saveTruckSettings(_ settings: TruckSettings) async throws {
+    func saveTruckSettings(_ settings: DatabaseTruckSettings) async throws {
         try await client.database
             .from("truck_settings")
             .upsert(settings)
@@ -205,8 +207,8 @@ class SupabaseService {
     }
 
     /// Get truck settings for current user
-    func getTruckSettings(userId: String) async throws -> TruckSettings? {
-        let settings: [TruckSettings] = try await client.database
+    func getTruckSettings(userId: String) async throws -> DatabaseTruckSettings? {
+        let settings: [DatabaseTruckSettings] = try await client.database
             .from("truck_settings")
             .select()
             .eq("user_id", value: userId)
@@ -311,7 +313,7 @@ struct TripHistory: Codable {
     }
 }
 
-struct TruckSettings: Codable {
+struct DatabaseTruckSettings: Codable {
     let userId: String
     let height: Double  // meters
     let width: Double   // meters

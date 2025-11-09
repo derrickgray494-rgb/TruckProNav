@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import UIKit
 import RevenueCat
 
 // MARK: - Subscription Tiers
@@ -81,13 +82,15 @@ class RevenueCatService {
         Purchases.configure(withAPIKey: apiKey)
 
         // Set user ID if logged in
-        if let userId = SupabaseService.shared.currentUser?.id.uuidString {
-            Purchases.shared.logIn(userId) { customerInfo, created, error in
-                if let error = error {
-                    print("❌ RevenueCat login error: \(error.localizedDescription)")
-                } else {
-                    print("✅ RevenueCat user logged in: \(userId)")
-                    self.updateSubscriptionStatus(customerInfo: customerInfo)
+        Task {
+            if let userId = await SupabaseService.shared.currentUser?.id.uuidString {
+                Purchases.shared.logIn(userId) { customerInfo, created, error in
+                    if let error = error {
+                        print("❌ RevenueCat login error: \(error.localizedDescription)")
+                    } else {
+                        print("✅ RevenueCat user logged in: \(userId)")
+                        self.updateSubscriptionStatus(customerInfo: customerInfo)
+                    }
                 }
             }
         }

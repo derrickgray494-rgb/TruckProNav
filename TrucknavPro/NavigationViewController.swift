@@ -214,6 +214,7 @@ class MapViewController: UIViewController {
             self?.enable3DBuildings()
             self?.setupAnnotationManager()
             self?.configureDayNightMode()
+            self?.setInitialCameraPosition()
             print("✅ NavigationMapView loaded - ready for free-drive")
         }.store(in: &cancelables)
     }
@@ -249,9 +250,17 @@ class MapViewController: UIViewController {
     }
 
     private func configureDayNightMode() {
-        // Set map style based on system color scheme
-        let isDarkMode = traitCollection.userInterfaceStyle == .dark
-        let lightPreset = isDarkMode ? "night" : "day"
+        // Set map style based on user preference or system color scheme
+        let lightPreset: String
+        switch TruckSettings.mapStyle {
+        case .auto:
+            // Use system appearance
+            lightPreset = traitCollection.userInterfaceStyle == .dark ? "night" : "day"
+        case .day:
+            lightPreset = "day"
+        case .night:
+            lightPreset = "night"
+        }
 
         do {
             try navigationMapView.mapView.mapboxMap.setStyleImportConfigProperty(
@@ -259,7 +268,7 @@ class MapViewController: UIViewController {
                 config: "lightPreset",
                 value: lightPreset
             )
-            print("🌓 Map style set to \(lightPreset) mode")
+            print("🌓 Map style set to \(lightPreset) mode (preference: \(TruckSettings.mapStyle.rawValue))")
         } catch {
             print("⚠️ Error setting map light preset: \(error)")
         }
@@ -268,9 +277,30 @@ class MapViewController: UIViewController {
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
 
-        // Update map style when system appearance changes
+        // Update map style when system appearance changes (only if in Auto mode)
         if traitCollection.userInterfaceStyle != previousTraitCollection?.userInterfaceStyle {
-            configureDayNightMode()
+            if TruckSettings.mapStyle == .auto {
+                configureDayNightMode()
+            }
+        }
+    }
+
+    private func setInitialCameraPosition() {
+        // Set initial camera to user location with proper zoom
+        if let userLocation = locationManager.location?.coordinate {
+            let cameraOptions = CameraOptions(
+                center: userLocation,
+                zoom: 16,
+                bearing: 0,
+                pitch: 45
+            )
+            navigationMapView.mapView.camera.fly(to: cameraOptions, duration: 1.0, completion: nil)
+            print("📍 Initial camera set to user location at zoom 16")
+        } else {
+            // If no location yet, wait a bit and try again
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                self?.setInitialCameraPosition()
+            }
         }
     }
 
@@ -385,6 +415,7 @@ class MapViewController: UIViewController {
 
     @objc private func openSettings() {
         let settingsVC = SettingsViewController()
+        settingsVC.delegate = self  // Set delegate to receive settings changes
         settingsVC.modalPresentationStyle = .pageSheet
         if let sheet = settingsVC.sheetPresentationController {
             sheet.detents = [.medium(), .large()]
@@ -436,6 +467,17 @@ class MapViewController: UIViewController {
         // Keep flags in lockstep
         isFreeDriveActive = true
         isNavigating = false
+
+        // Set initial camera position if location is available
+        if let userLocation = locationManager.location?.coordinate {
+            let cameraOptions = CameraOptions(
+                center: userLocation,
+                zoom: 16,
+                bearing: locationManager.heading?.trueHeading ?? 0,
+                pitch: 45
+            )
+            navigationMapView.mapView.camera.ease(to: cameraOptions, duration: 0.5, curve: .easeOut, completion: nil)
+        }
 
         // Enable camera to follow user bearing (heading direction)
         navigationMapView.navigationCamera.update(cameraState: .following)
@@ -1211,10 +1253,28 @@ extension MapViewController: NavigationViewControllerDelegate {
 
 extension MapViewController: CLLocationManagerDelegate {
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        if manager.authorizationStatus == .authorizedWhenInUse ||
-           manager.authorizationStatus == .authorizedAlways {
+        let status = manager.authorizationStatus
+        print("📍 Location authorization status: \(status.rawValue)")
+
+        switch status {
+        case .authorizedWhenInUse, .authorizedAlways:
             manager.startUpdatingLocation()
             manager.startUpdatingHeading()
+            print("✅ Location services started")
+
+            // Recenter camera to user location if we just got permission
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                self?.recenterMap()
+            }
+
+        case .denied, .restricted:
+            print("❌ Location access denied - app will not function properly")
+
+        case .notDetermined:
+            print("⚠️ Location permission not yet determined")
+
+        @unknown default:
+            break
         }
     }
 
@@ -1264,6 +1324,43 @@ extension MapViewController: AnnotationInteractionDelegate {
 
             // Clear annotations after selection
             clearSearchAnnotations()
+        }
+    }
+}
+
+// MARK: - SettingsViewControllerDelegate
+
+extension MapViewController: SettingsViewControllerDelegate {
+    func settingsDidChange() {
+        print("⚙️ Settings changed - updating app configuration")
+        // Settings are automatically persisted via TruckSettings UserDefaults
+        // Any additional actions can be added here if needed
+    }
+
+    func mapStyleDidChange(to style: TruckSettings.MapStyle) {
+        print("🎨 Map style changed to: \(style.rawValue)")
+
+        // Update map appearance immediately based on selected style
+        let lightPreset: String
+        switch style {
+        case .auto:
+            // Use system appearance
+            lightPreset = traitCollection.userInterfaceStyle == .dark ? "night" : "day"
+        case .day:
+            lightPreset = "day"
+        case .night:
+            lightPreset = "night"
+        }
+
+        do {
+            try navigationMapView.mapView.mapboxMap.setStyleImportConfigProperty(
+                for: "basemap",
+                config: "lightPreset",
+                value: lightPreset
+            )
+            print("✅ Map style updated to \(lightPreset) mode")
+        } catch {
+            print("⚠️ Error updating map style: \(error)")
         }
     }
 }
