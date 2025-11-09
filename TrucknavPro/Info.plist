@@ -2,39 +2,20 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Location Permissions -->
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>TruckNav Pro requires your location to provide accurate truck-specific navigation, real-time traffic updates, and turn-by-turn directions while you're using the app.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>TruckNav Pro needs continuous location access to provide uninterrupted turn-by-turn navigation, track your route progress, and deliver real-time traffic alerts even when the app is in the background.</string>
-	<key>NSLocationAlwaysUsageDescription</key>
-	<string>TruckNav Pro requires background location access to maintain accurate navigation guidance and provide timely traffic alerts throughout your entire journey.</string>
 	<key>LocationAccuracyAuthorizationDescription</key>
 	<string>TruckNav Pro needs precise location data to provide accurate turn-by-turn navigation, lane guidance, and truck-specific routing. Reduced accuracy may result in navigation errors.</string>
-
-	<!-- Motion Permission -->
-	<key>NSMotionUsageDescription</key>
-	<string>TruckNav Pro uses motion data to improve compass accuracy and provide smooth camera tracking while you're driving.</string>
-
-	<!-- API Keys -->
 	<key>MBXAccessToken</key>
 	<string>pk.eyJ1IjoiZHRyZXZvbjJrMjAiLCJhIjoiY21obGZzb2ppMWwxazJqcHRpaTJhbTZnciJ9.vTBrfzWDPi4DQ86JEKULiA</string>
 	<key>OpenWeatherKey</key>
 	<string>0e1239c7d0febb15d3c23d370e0af89e</string>
+	<key>RevenueCatAPIKey</key>
+	<string>appl_IbKfZxaIBJqapJwVjsUwLKOLDsk</string>
+	<key>SupabaseAnonKey</key>
+	<string>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRzamFxaGV0bnNuaHFnbmZoaWtuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1MjE0MDEsImV4cCI6MjA3NzA5NzQwMX0.PiTGfyYpKtanp2DnyVx_LYB4tUM0t_DnmgVK4IHH75c</string>
+	<key>SupabaseURL</key>
+	<string>https://tsjaqhetnsnhqgnfhikn.supabase.co</string>
 	<key>TomTomAPIKey</key>
 	<string>Nq78WMNfPT4Xvm8jV7KiYGp6nb55VDkO</string>
-
-	<!-- Supabase Configuration (Add your credentials here) -->
-	<key>SupabaseURL</key>
-	<string>YOUR_SUPABASE_URL_HERE</string>
-	<key>SupabaseAnonKey</key>
-	<string>YOUR_SUPABASE_ANON_KEY_HERE</string>
-
-	<!-- RevenueCat Configuration (Add your API key here) -->
-	<key>RevenueCatAPIKey</key>
-	<string>YOUR_REVENUECAT_API_KEY_HERE</string>
-
-	<!-- Background Modes -->
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
