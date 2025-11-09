@@ -191,10 +191,8 @@ class MapViewController: UIViewController {
     }
 
     private func configurePuck() {
-        var puckConfig = Puck2DConfiguration()
-        puckConfig.showsAccuracyRing = false
-        puckConfig.pulsing = .default
-        navigationMapView.mapView.location.options.puckType = .puck2D(puckConfig)
+        // 3D puck is already configured in setupMapView()
+        // Just enable bearing tracking
         navigationMapView.mapView.location.options.puckBearingEnabled = true
     }
 
@@ -308,7 +306,8 @@ class MapViewController: UIViewController {
             pitch: 60
         )
 
-        navigationMapView.mapView.camera.ease(to: cameraOptions, duration: 0.5)
+        // Smoother camera animation with longer duration and easeInOut curve
+        navigationMapView.mapView.camera.ease(to: cameraOptions, duration: 1.5, curve: .easeInOut, completion: nil)
         print("📍 Map recentered to current location")
     }
 
@@ -478,20 +477,27 @@ class MapViewController: UIViewController {
     }
 
     @objc private func cancelRoutePreview() {
-        // Hide route preview
-        routePreviewContainer.isHidden = true
+        // Remove route visualization from map (CRITICAL!)
+        navigationMapView.removeRoutes()
 
-        // Clear current routes
+        // Stop camera animations and return to idle state
+        navigationMapView.navigationCamera.stop()
+
+        // Clear stored route data
         currentNavigationRoutes = nil
 
-        // Show search panel again
+        // Hide route preview UI
+        routePreviewContainer.isHidden = true
+
+        // Show free-drive UI elements
         panelController.view.isHidden = false
         recenterButton.isHidden = false
+        settingsButton.isHidden = false
 
-        // Restore search annotations if they were cleared
-        // (User might want to see them again)
+        // Recenter map smoothly on user location
+        recenterMap()
 
-        print("❌ Route preview canceled")
+        print("❌ Route preview canceled - routes removed from map, returned to free-drive")
     }
 
     @objc private func confirmStartNavigation() {
@@ -672,7 +678,7 @@ extension MapViewController: SearchControllerDelegate {
                 zoom: 15,
                 pitch: 0
             )
-            navigationMapView.mapView.camera.ease(to: cameraOptions, duration: 1.0)
+            navigationMapView.mapView.camera.ease(to: cameraOptions, duration: 1.5, curve: .easeInOut, completion: nil)
             return
         }
 
@@ -705,7 +711,7 @@ extension MapViewController: SearchControllerDelegate {
             pitch: 0
         )
 
-        navigationMapView.mapView.camera.ease(to: cameraOptions, duration: 1.0)
+        navigationMapView.mapView.camera.ease(to: cameraOptions, duration: 1.5, curve: .easeInOut, completion: nil)
     }
 
     private func clearSearchAnnotations() {
