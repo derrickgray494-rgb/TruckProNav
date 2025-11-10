@@ -33,13 +33,17 @@ class MapViewController: UIViewController {
     private var isNavigating: Bool = false
     private var isFreeDriveActive: Bool = false
     private var currentNavigationRoutes: NavigationRoutes?
+    private var selectedAlternativeRouteIndex: Int? = nil
 
     // Free-drive mode UI (Mapbox drop-in components)
     private let speedLimitView = SpeedLimitView()
     private let roadNameLabel = UILabel()
 
-    // Simple route preview buttons (Mapbox showcase() handles the route display)
+    // Route preview UI (Mapbox showcase() handles the route display)
     private let routePreviewContainer = UIView()
+    private let routeDistanceLabel = UILabel()
+    private let routeDurationLabel = UILabel()
+    private let routeETALabel = UILabel()
     private let startNavigationButton = UIButton(type: .system)
     private let cancelRouteButton = UIButton(type: .system)
 
@@ -212,6 +216,7 @@ class MapViewController: UIViewController {
 
         navigationMapView.mapView.mapboxMap.onStyleLoaded.observeNext { [weak self] _ in
             self?.enable3DBuildings()
+            self?.enableTrafficLayer()
             self?.setupAnnotationManager()
             self?.configureDayNightMode()
             self?.setInitialCameraPosition()
@@ -233,6 +238,20 @@ class MapViewController: UIViewController {
             print("✅ 3D buildings enabled")
         } catch {
             print("⚠️ 3D buildings error: \(error)")
+        }
+    }
+
+    private func enableTrafficLayer() {
+        do {
+            // Enable Mapbox Traffic layer (shows live congestion as colored road overlays)
+            try navigationMapView.mapView.mapboxMap.setStyleImportConfigProperty(
+                for: "basemap",
+                config: "showTraffic",
+                value: true
+            )
+            print("🚦 Mapbox Traffic overlay enabled - showing live congestion")
+        } catch {
+            print("⚠️ Traffic layer error: \(error)")
         }
     }
 
@@ -659,8 +678,7 @@ class MapViewController: UIViewController {
     // MARK: - Route Preview UI
 
     private func setupRoutePreviewUI() {
-        // Simple container with just Cancel and Start buttons
-        // Mapbox NavigationMapView.showcase() handles route display on map
+        // Route preview card with detailed info (distance, duration, ETA) + buttons
         routePreviewContainer.backgroundColor = UIColor.systemBackground.withAlphaComponent(0.95)
         routePreviewContainer.layer.cornerRadius = 16
         routePreviewContainer.layer.shadowColor = UIColor.black.cgColor
@@ -670,6 +688,24 @@ class MapViewController: UIViewController {
         routePreviewContainer.translatesAutoresizingMaskIntoConstraints = false
         routePreviewContainer.isHidden = true
         view.addSubview(routePreviewContainer)
+
+        // Route distance label (e.g., "45.3 mi")
+        routeDistanceLabel.font = .systemFont(ofSize: 28, weight: .bold)
+        routeDistanceLabel.textColor = .label
+        routeDistanceLabel.translatesAutoresizingMaskIntoConstraints = false
+        routePreviewContainer.addSubview(routeDistanceLabel)
+
+        // Route duration label (e.g., "1h 23min")
+        routeDurationLabel.font = .systemFont(ofSize: 20, weight: .semibold)
+        routeDurationLabel.textColor = .secondaryLabel
+        routeDurationLabel.translatesAutoresizingMaskIntoConstraints = false
+        routePreviewContainer.addSubview(routeDurationLabel)
+
+        // Route ETA label (e.g., "Arrive by 3:45 PM")
+        routeETALabel.font = .systemFont(ofSize: 16, weight: .medium)
+        routeETALabel.textColor = .systemBlue
+        routeETALabel.translatesAutoresizingMaskIntoConstraints = false
+        routePreviewContainer.addSubview(routeETALabel)
 
         // Cancel button
         cancelRouteButton.setTitle("Cancel", for: .normal)
@@ -682,7 +718,7 @@ class MapViewController: UIViewController {
         routePreviewContainer.addSubview(cancelRouteButton)
 
         // Start navigation button
-        startNavigationButton.setTitle("🚛 Start Navigation", for: .normal)
+        startNavigationButton.setTitle("🚛 Start", for: .normal)
         startNavigationButton.backgroundColor = .systemBlue
         startNavigationButton.setTitleColor(.white, for: .normal)
         startNavigationButton.titleLabel?.font = .boldSystemFont(ofSize: 18)
@@ -695,14 +731,25 @@ class MapViewController: UIViewController {
             routePreviewContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             routePreviewContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             routePreviewContainer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
-            routePreviewContainer.heightAnchor.constraint(equalToConstant: 80),
+            routePreviewContainer.heightAnchor.constraint(equalToConstant: 160),
 
-            cancelRouteButton.topAnchor.constraint(equalTo: routePreviewContainer.topAnchor, constant: 16),
+            // Route info labels at top
+            routeDistanceLabel.topAnchor.constraint(equalTo: routePreviewContainer.topAnchor, constant: 16),
+            routeDistanceLabel.leadingAnchor.constraint(equalTo: routePreviewContainer.leadingAnchor, constant: 20),
+
+            routeDurationLabel.centerYAnchor.constraint(equalTo: routeDistanceLabel.centerYAnchor),
+            routeDurationLabel.leadingAnchor.constraint(equalTo: routeDistanceLabel.trailingAnchor, constant: 12),
+
+            routeETALabel.topAnchor.constraint(equalTo: routeDistanceLabel.bottomAnchor, constant: 4),
+            routeETALabel.leadingAnchor.constraint(equalTo: routePreviewContainer.leadingAnchor, constant: 20),
+
+            // Buttons at bottom
+            cancelRouteButton.bottomAnchor.constraint(equalTo: routePreviewContainer.bottomAnchor, constant: -16),
             cancelRouteButton.leadingAnchor.constraint(equalTo: routePreviewContainer.leadingAnchor, constant: 16),
             cancelRouteButton.widthAnchor.constraint(equalTo: routePreviewContainer.widthAnchor, multiplier: 0.3),
             cancelRouteButton.heightAnchor.constraint(equalToConstant: 50),
 
-            startNavigationButton.topAnchor.constraint(equalTo: routePreviewContainer.topAnchor, constant: 16),
+            startNavigationButton.bottomAnchor.constraint(equalTo: routePreviewContainer.bottomAnchor, constant: -16),
             startNavigationButton.trailingAnchor.constraint(equalTo: routePreviewContainer.trailingAnchor, constant: -16),
             startNavigationButton.leadingAnchor.constraint(equalTo: cancelRouteButton.trailingAnchor, constant: 12),
             startNavigationButton.heightAnchor.constraint(equalToConstant: 50)
@@ -710,8 +757,9 @@ class MapViewController: UIViewController {
     }
 
     private func showRoutePreview(for navigationRoutes: NavigationRoutes) {
-        // Store routes
+        // Store routes and reset selection
         currentNavigationRoutes = navigationRoutes
+        selectedAlternativeRouteIndex = nil
 
         // Use Mapbox NavigationMapView's showcase() method to display route with all alternatives
         navigationMapView.showcase(navigationRoutes, routesPresentationStyle: .all(shouldFit: true), animated: true)
@@ -719,16 +767,37 @@ class MapViewController: UIViewController {
         // Enable alternative route selection during preview
         enableAlternativeRouteSelection()
 
-        // Show simple start navigation button
+        // Calculate route details
+        let primaryRoute = navigationRoutes.mainRoute.route
+        let distanceMiles = primaryRoute.distance * 0.000621371
+        let durationSeconds = primaryRoute.expectedTravelTime
+        let durationMinutes = Int(durationSeconds / 60)
+
+        // Format distance (e.g., "45.3 mi")
+        routeDistanceLabel.text = String(format: "%.1f mi", distanceMiles)
+
+        // Format duration (e.g., "1h 23min" or "45min")
+        let hours = durationMinutes / 60
+        let minutes = durationMinutes % 60
+        if hours > 0 {
+            routeDurationLabel.text = "\(hours)h \(minutes)min"
+        } else {
+            routeDurationLabel.text = "\(minutes)min"
+        }
+
+        // Calculate ETA (e.g., "Arrive by 3:45 PM")
+        let eta = Date().addingTimeInterval(durationSeconds)
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        routeETALabel.text = "Arrive by \(formatter.string(from: eta))"
+
+        // Show route preview card
         routePreviewContainer.isHidden = false
         recenterButton.isHidden = true
 
         view.bringSubviewToFront(routePreviewContainer)
 
-        let primaryRoute = navigationRoutes.mainRoute.route
-        let distanceMiles = primaryRoute.distance * 0.000621371
-        let durationMinutes = Int(primaryRoute.expectedTravelTime / 60)
-        print("✅ Mapbox showcase(): Route displayed - \(String(format: "%.1f mi", distanceMiles)), \(durationMinutes) min")
+        print("✅ Route preview: \(String(format: "%.1f mi", distanceMiles)), \(durationMinutes) min, ETA \(formatter.string(from: eta))")
         print("📍 +\(navigationRoutes.alternativeRoutes.count) alternative route(s) available")
 
         if !navigationRoutes.alternativeRoutes.isEmpty {
@@ -749,28 +818,113 @@ class MapViewController: UIViewController {
 
     @objc private func handleRoutePreviewTap(_ gesture: UITapGestureRecognizer) {
         // Only handle during route preview, not during navigation
-        guard !isNavigating, currentNavigationRoutes != nil else { return }
+        guard !isNavigating, let routes = currentNavigationRoutes else { return }
+        guard gesture.state == .ended else { return }
 
         let point = gesture.location(in: navigationMapView.mapView)
 
-        // Query rendered route features at tap point
-        navigationMapView.mapView.mapboxMap.queryRenderedFeatures(
-            with: point,
-            options: RenderedQueryOptions(layerIds: nil, filter: nil)
-        ) { result in
-            switch result {
-            case .success(let features):
-                // Log tap on any route feature
-                if !features.isEmpty {
-                    print("🗺️ Tapped on map feature during route preview")
-                    // Alternative route selection during preview
-                    // Mapbox Navigation SDK v3 displays all routes via showcase()
-                    // Route interaction for selection can be enhanced here
-                }
-            case .failure(let error):
-                print("⚠️ Route query error: \(error)")
+        // Skip if user tapped on buttons or route preview card
+        if routePreviewContainer.frame.contains(point) {
+            return
+        }
+
+        print("🗺️ Map tapped at \(point) - checking for route selection")
+
+        // Check proximity to all routes (main + alternatives)
+        selectClosestAlternativeRoute(to: point, from: routes)
+    }
+
+    private func selectClosestAlternativeRoute(to point: CGPoint, from routes: NavigationRoutes) {
+        guard !routes.alternativeRoutes.isEmpty else {
+            print("💡 No alternative routes available")
+            return
+        }
+
+        // Convert screen point to coordinate
+        let tappedCoordinate = navigationMapView.mapView.mapboxMap.coordinate(for: point)
+
+        // Find closest route to the tapped point (checking ALL routes including main)
+        var closestDistance = CLLocationDistanceMax
+        var closestRouteIndex: Int? = nil // -1 = main route, 0+ = alternative routes
+
+        // Check main route
+        let mainRouteCoords = routes.mainRoute.route.shape?.coordinates ?? []
+        for coordinate in mainRouteCoords {
+            let distance = tappedCoordinate.distance(to: coordinate)
+            if distance < closestDistance {
+                closestDistance = distance
+                closestRouteIndex = -1 // Main route marker
             }
         }
+
+        // Check each alternative route
+        for (index, alternativeRoute) in routes.alternativeRoutes.enumerated() {
+            let route = alternativeRoute.route
+            let routeCoordinates = route.shape?.coordinates ?? []
+
+            for coordinate in routeCoordinates {
+                let distance = tappedCoordinate.distance(to: coordinate)
+                if distance < closestDistance {
+                    closestDistance = distance
+                    closestRouteIndex = index
+                }
+            }
+        }
+
+        // More generous distance threshold (500m instead of 100m) for easier tapping
+        guard closestDistance < 500 else {
+            print("💡 Tap closer to a route to select it (tapped \(Int(closestDistance))m away)")
+            return
+        }
+
+        // If user tapped main route, show message
+        if closestRouteIndex == -1 {
+            print("ℹ️ Main route already selected (tap an alternative to switch)")
+            return
+        }
+
+        // Switch to the selected alternative route
+        if let routeIndex = closestRouteIndex {
+            print("🔄 Switching to alternative route \(routeIndex + 1) (distance: \(Int(closestDistance))m)")
+            switchToAlternativeRoute(at: routeIndex)
+        }
+    }
+
+    private func switchToAlternativeRoute(at index: Int) {
+        guard let routes = currentNavigationRoutes,
+              index < routes.alternativeRoutes.count else { return }
+
+        // Store selected alternative route index
+        selectedAlternativeRouteIndex = index
+
+        // Get the selected alternative route
+        let selectedAlternative = routes.alternativeRoutes[index]
+        let selectedRoute = selectedAlternative.route
+
+        // Update preview UI to show selected alternative route's details
+        let distanceMiles = selectedRoute.distance * 0.000621371
+        let durationSeconds = selectedRoute.expectedTravelTime
+        let durationMinutes = Int(durationSeconds / 60)
+
+        // Format distance
+        routeDistanceLabel.text = String(format: "%.1f mi", distanceMiles)
+
+        // Format duration
+        let hours = durationMinutes / 60
+        let minutes = durationMinutes % 60
+        if hours > 0 {
+            routeDurationLabel.text = "\(hours)h \(minutes)min"
+        } else {
+            routeDurationLabel.text = "\(minutes)min"
+        }
+
+        // Calculate ETA
+        let eta = Date().addingTimeInterval(durationSeconds)
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        routeETALabel.text = "Arrive by \(formatter.string(from: eta))"
+
+        print("✅ Selected alternative route \(index + 1) - preview updated")
     }
 
     // MARK: - Universal Route Cancellation
@@ -874,7 +1028,22 @@ class MapViewController: UIViewController {
         // Hide route preview
         routePreviewContainer.isHidden = true
 
-        // Start navigation with selected routes
+        // Check if user selected an alternative route
+        if let selectedIndex = selectedAlternativeRouteIndex {
+            print("🔄 User selected alternative route \(selectedIndex + 1) - recalculating to make it primary")
+
+            // Get destination from the selected route to recalculate
+            let selectedRoute = routes.alternativeRoutes[selectedIndex].route
+            if let destination = selectedRoute.shape?.coordinates.last,
+               let origin = locationManager.location?.coordinate {
+
+                // Recalculate route to get fresh NavigationRoutes with selected path
+                calculateMapboxRoute(from: origin, to: destination)
+                return
+            }
+        }
+
+        // Start navigation with current routes (user didn't select alternative)
         startNavigation(with: routes)
     }
 
