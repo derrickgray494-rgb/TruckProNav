@@ -25,6 +25,7 @@ struct TruckSettings {
     private static let enableHazardWarningsKey = "enable_hazard_warnings"
     private static let enableHazardAudioKey = "enable_hazard_audio"
     private static let warningDistanceKey = "warning_distance"
+    private static let showWeatherOverlayKey = "show_weather_overlay"
 
     // MARK: - Truck Specifications
 
@@ -187,6 +188,18 @@ struct TruckSettings {
         }
     }
 
+    // MARK: - Weather Settings
+
+    /// Show weather radar overlay on map
+    static var showWeatherOverlay: Bool {
+        get {
+            UserDefaults.standard.object(forKey: showWeatherOverlayKey) as? Bool ?? false
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: showWeatherOverlayKey)
+        }
+    }
+
     // MARK: - Helper Methods
 
     /// Reset all settings to defaults
@@ -209,32 +222,20 @@ struct TruckSettings {
 
     /// Format height for display
     static func formattedHeight() -> String {
-        if useImperialUnits {
-            let feet = Int(height * 3.28084)
-            let inches = Int((height * 39.3701).truncatingRemainder(dividingBy: 12))
-            return "\(feet)'\(inches)\" (\(String(format: "%.2f", height))m)"
-        } else {
-            return "\(String(format: "%.2f", height))m"
-        }
+        let feet = Int(height * 3.28084)
+        let inches = Int((height * 39.3701).truncatingRemainder(dividingBy: 12))
+        return "\(feet)'\(inches)\""
     }
 
     /// Format width for display
     static func formattedWidth() -> String {
-        if useImperialUnits {
-            let feet = height * 3.28084
-            return "\(String(format: "%.1f", feet))' (\(String(format: "%.2f", width))m)"
-        } else {
-            return "\(String(format: "%.2f", width))m"
-        }
+        let feet = width * 3.28084
+        return "\(String(format: "%.1f", feet))'"
     }
 
     /// Format weight for display
     static func formattedWeight() -> String {
-        if useImperialUnits {
-            let lbs = weight * 2204.62
-            return "\(String(format: "%.0f", lbs)) lbs (\(String(format: "%.1f", weight))t)"
-        } else {
-            return "\(String(format: "%.1f", weight))t"
-        }
+        let lbs = weight * 2204.62
+        return "\(String(format: "%.0f", lbs)) lbs"
     }
 }

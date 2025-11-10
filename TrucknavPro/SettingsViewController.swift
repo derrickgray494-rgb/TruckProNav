@@ -87,7 +87,7 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         case .truck: return 3
         case .navigation: return 4
         case .hazards: return 2
-        case .map: return 3
+        case .map: return 4
         case .search: return 2
         case .system: return 4
         }
@@ -221,6 +221,13 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
             cell.textLabel?.text = "Map Style"
             cell.valueLabel.text = TruckSettings.mapStyle.rawValue
             cell.accessoryType = .disclosureIndicator
+            return cell
+        case 3:
+            let cell = tableView.dequeueReusableCell(withIdentifier: "SwitchCell", for: indexPath) as! SwitchTableViewCell
+            cell.textLabel?.text = "Show Weather Radar"
+            cell.switchControl.isOn = TruckSettings.showWeatherOverlay
+            cell.switchControl.tag = 2003
+            cell.switchControl.addTarget(self, action: #selector(switchValueChanged(_:)), for: .valueChanged)
             return cell
         default:
             return UITableViewCell()
@@ -408,6 +415,9 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
             print("💾 Imperial units: \(sender.isOn)")
             // Reload truck settings to update display format
             tableView.reloadSections(IndexSet(integer: 0), with: .none)
+        case 2003: // Weather Overlay
+            TruckSettings.showWeatherOverlay = sender.isOn
+            print("💾 Show weather overlay: \(sender.isOn)")
         default:
             break
         }
@@ -418,25 +428,35 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
     // MARK: - Helper Methods
 
     private func showTruckDimensionPicker(type: String, currentValue: String) {
-        let alert = UIAlertController(title: "Truck \(type)", message: "Enter value in meters\nCurrent: \(currentValue)", preferredStyle: .alert)
+        let (message, placeholder, unit) = getInputDetailsForType(type)
+
+        let alert = UIAlertController(title: "Truck \(type)", message: "\(message)\nCurrent: \(currentValue)", preferredStyle: .alert)
         alert.addTextField { textField in
-            textField.placeholder = "Enter \(type.lowercased()) in meters"
+            textField.placeholder = placeholder
             textField.keyboardType = .decimalPad
         }
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         alert.addAction(UIAlertAction(title: "Save", style: .default) { [weak self] _ in
-            guard let self = self, let text = alert.textFields?.first?.text, let value = Double(text) else { return }
+            guard let self = self, let text = alert.textFields?.first?.text, let inputValue = Double(text) else { return }
 
+            // Convert US units to metric for storage
+            let metricValue: Double
             switch type {
             case "Height":
-                TruckSettings.height = value
-                print("💾 Saved truck height: \(value)m")
+                // Convert feet to meters
+                metricValue = inputValue / 3.28084
+                TruckSettings.height = metricValue
+                print("💾 Saved truck height: \(inputValue)ft (\(metricValue)m)")
             case "Width":
-                TruckSettings.width = value
-                print("💾 Saved truck width: \(value)m")
+                // Convert feet to meters
+                metricValue = inputValue / 3.28084
+                TruckSettings.width = metricValue
+                print("💾 Saved truck width: \(inputValue)ft (\(metricValue)m)")
             case "Weight":
-                TruckSettings.weight = value
-                print("💾 Saved truck weight: \(value)t")
+                // Convert pounds to metric tons
+                metricValue = inputValue / 2204.62
+                TruckSettings.weight = metricValue
+                print("💾 Saved truck weight: \(inputValue)lbs (\(metricValue)t)")
             default:
                 break
             }
@@ -445,6 +465,19 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
             self.delegate?.settingsDidChange()
         })
         present(alert, animated: true)
+    }
+
+    private func getInputDetailsForType(_ type: String) -> (message: String, placeholder: String, unit: String) {
+        switch type {
+        case "Height":
+            return ("Enter height in feet (e.g., 13.5 for 13'6\")", "Enter height in feet", "ft")
+        case "Width":
+            return ("Enter width in feet", "Enter width in feet (e.g., 8.0)", "ft")
+        case "Weight":
+            return ("Enter weight in pounds", "Enter weight in lbs (e.g., 80000)", "lbs")
+        default:
+            return ("Enter value", "Enter value", "")
+        }
     }
 
     private func showMapStylePicker() {

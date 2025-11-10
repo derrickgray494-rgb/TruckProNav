@@ -68,6 +68,7 @@ class MapViewController: UIViewController {
 
     // Hazard Warning System
     private var hazardMonitoringService: HazardMonitoringService?
+    private var weatherOverlayService: WeatherOverlayService?
     private var currentHazardWarningView: HazardWarningView?
     private var lastHazardAlert: HazardAlert?
 
@@ -123,8 +124,9 @@ class MapViewController: UIViewController {
             tomTomTrafficService = TomTomTrafficService(apiKey: tomTomApiKey)
             tomTomSearchService = TomTomSearchService(apiKey: tomTomApiKey)
             hazardMonitoringService = HazardMonitoringService(tomTomApiKey: tomTomApiKey)
+            weatherOverlayService = WeatherOverlayService()
             setupHazardWarningCallbacks()
-            print("🚛 TomTom Services initialized (Routing, Traffic, Search, Hazard Monitoring)")
+            print("🚛 TomTom Services initialized (Routing, Traffic, Search, Hazard Monitoring, Weather Overlay)")
         } else {
             print("⚠️ TomTom API key not found - using Mapbox only")
         }
@@ -214,10 +216,12 @@ class MapViewController: UIViewController {
         navigationMapView.frame = view.bounds
         navigationMapView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
 
-        // Use 2D puck for maximum reliability (Mapbox recommended)
-        navigationMapView.puckType = .puck2D(.navigationDefault)
+        // Use 2D puck with heading-based bearing for directional rotation
+        var puckConfig = Puck2DConfiguration.makeDefault(showBearing: true)
+        puckConfig.bearingImage = puckConfig.topImage // Use same image for bearing
+        navigationMapView.puckType = .puck2D(puckConfig)
 
-        // Enable bearing tracking for directional indicator
+        // Enable bearing tracking and use heading (compass) instead of course (movement direction)
         navigationMapView.mapView.location.options.puckBearingEnabled = true
 
         view.addSubview(navigationMapView)
@@ -228,6 +232,7 @@ class MapViewController: UIViewController {
             self?.setupAnnotationManager()
             self?.configureDayNightMode()
             self?.setInitialCameraPosition()
+            self?.updateWeatherOverlay()
             print("✅ NavigationMapView loaded - ready for free-drive")
         }.store(in: &cancelables)
     }
@@ -260,6 +265,24 @@ class MapViewController: UIViewController {
             print("🚦 Mapbox Traffic overlay enabled - showing live congestion")
         } catch {
             print("⚠️ Traffic layer error: \(error)")
+        }
+    }
+
+    private func updateWeatherOverlay() {
+        guard let weatherService = weatherOverlayService else { return }
+
+        if TruckSettings.showWeatherOverlay {
+            // Add weather overlay
+            weatherService.addWeatherOverlay(to: navigationMapView.mapView) { success in
+                if success {
+                    print("🌧️ Weather radar overlay enabled")
+                } else {
+                    print("⚠️ Failed to add weather overlay")
+                }
+            }
+        } else {
+            // Remove weather overlay
+            weatherService.removeWeatherOverlay(from: navigationMapView.mapView)
         }
     }
 
@@ -965,8 +988,10 @@ class MapViewController: UIViewController {
         navigationMapView.navigationCamera.stop()
         navigationMapView.navigationCamera.update(cameraState: .idle)
 
-        // Re-enable puck
-        navigationMapView.puckType = .puck2D(.navigationDefault)
+        // Re-enable puck with heading-based bearing
+        var puckConfig = Puck2DConfiguration.makeDefault(showBearing: true)
+        puckConfig.bearingImage = puckConfig.topImage
+        navigationMapView.puckType = .puck2D(puckConfig)
         navigationMapView.mapView.location.options.puckBearingEnabled = true
 
         // Restart free-drive mode
@@ -1009,8 +1034,10 @@ class MapViewController: UIViewController {
         navigationMapView.navigationCamera.stop()
         navigationMapView.navigationCamera.update(cameraState: .idle)
 
-        // CRITICAL FIX: Re-enable puck (showcase() may have modified it)
-        navigationMapView.puckType = .puck2D(.navigationDefault)
+        // CRITICAL FIX: Re-enable puck with heading-based bearing (showcase() may have modified it)
+        var puckConfig = Puck2DConfiguration.makeDefault(showBearing: true)
+        puckConfig.bearingImage = puckConfig.topImage
+        navigationMapView.puckType = .puck2D(puckConfig)
         navigationMapView.mapView.location.options.puckBearingEnabled = true
 
         // Clear stored route data
@@ -1536,7 +1563,8 @@ extension MapViewController: SettingsViewControllerDelegate {
     func settingsDidChange() {
         print("⚙️ Settings changed - updating app configuration")
         // Settings are automatically persisted via TruckSettings UserDefaults
-        // Any additional actions can be added here if needed
+        // Update weather overlay based on new setting
+        updateWeatherOverlay()
     }
 
     func mapStyleDidChange(to style: TruckSettings.MapStyle) {
