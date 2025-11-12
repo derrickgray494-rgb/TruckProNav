@@ -2,7 +2,7 @@
 //  LoginView.swift
 //  TruckNavPro
 //
-//  SwiftUI login screen with authentication
+//  Custom SwiftUI login screen with authentication
 
 import SwiftUI
 
@@ -13,6 +13,9 @@ struct LoginView: View {
     @State private var showAlert = false
     @State private var alertTitle = ""
     @State private var alertMessage = ""
+    @FocusState private var focusedField: Field?
+
+    enum Field { case email, password }
 
     // MARK: - Colors
     private let accent = Color(red: 0.85, green: 0.25, blue: 0.2) // orange-red
