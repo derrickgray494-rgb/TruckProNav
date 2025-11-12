@@ -71,6 +71,9 @@ extension MapViewController {
         // Add table view
         stopsPanel.addSubview(stopsTableView)
 
+        // Add empty state view
+        stopsPanel.addSubview(emptyStateView)
+
         // Add optimize button
         stopsPanel.addSubview(optimizeButton)
 
@@ -86,23 +89,53 @@ extension MapViewController {
             stopsTableView.trailingAnchor.constraint(equalTo: stopsPanel.trailingAnchor),
             stopsTableView.bottomAnchor.constraint(equalTo: optimizeButton.topAnchor, constant: -8),
 
+            emptyStateView.topAnchor.constraint(equalTo: header.bottomAnchor),
+            emptyStateView.leadingAnchor.constraint(equalTo: stopsPanel.leadingAnchor),
+            emptyStateView.trailingAnchor.constraint(equalTo: stopsPanel.trailingAnchor),
+            emptyStateView.bottomAnchor.constraint(equalTo: optimizeButton.topAnchor, constant: -8),
+
             optimizeButton.leadingAnchor.constraint(equalTo: stopsPanel.leadingAnchor, constant: 16),
             optimizeButton.trailingAnchor.constraint(equalTo: stopsPanel.trailingAnchor, constant: -16),
             optimizeButton.bottomAnchor.constraint(equalTo: stopsPanel.bottomAnchor, constant: -16),
             optimizeButton.heightAnchor.constraint(equalToConstant: 50)
         ])
+
+        // Initial empty state update
+        updateEmptyState()
     }
 
     private func createStopsPanelHeader() -> UIView {
         let header = UIView()
         header.translatesAutoresizingMaskIntoConstraints = false
         header.backgroundColor = .secondarySystemBackground
+        header.tag = 1000  // Tag to access for updating title
 
+        // Title label with count
         let titleLabel = UILabel()
-        titleLabel.text = "Route Stops"
+        titleLabel.tag = 1001  // Tag to update text later
+        let count = stops.count
+        titleLabel.text = count > 0 ? "Saved Destinations (\(count))" : "Saved Destinations"
         titleLabel.font = .systemFont(ofSize: 18, weight: .semibold)
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
 
+        // Info button (i icon)
+        let infoButton = UIButton(type: .system)
+        infoButton.setImage(UIImage(systemName: "info.circle"), for: .normal)
+        infoButton.tintColor = .systemOrange
+        infoButton.translatesAutoresizingMaskIntoConstraints = false
+        infoButton.addTarget(self, action: #selector(showStopsInfoAlert), for: .touchUpInside)
+
+        // Clear All button
+        let clearAllButton = UIButton(type: .system)
+        clearAllButton.setTitle("Clear All", for: .normal)
+        clearAllButton.setTitleColor(.systemRed, for: .normal)
+        clearAllButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
+        clearAllButton.translatesAutoresizingMaskIntoConstraints = false
+        clearAllButton.tag = 1002  // Tag to hide/show
+        clearAllButton.isHidden = stops.isEmpty
+        clearAllButton.addTarget(self, action: #selector(clearAllStopsTapped), for: .touchUpInside)
+
+        // Collapse button
         let collapseButton = UIButton(type: .system)
         collapseButton.setImage(UIImage(systemName: "chevron.right"), for: .normal)
         collapseButton.tintColor = .secondaryLabel
@@ -110,6 +143,7 @@ extension MapViewController {
         collapseButton.tag = 999  // Tag for easy reference
         collapseButton.addTarget(self, action: #selector(toggleCollapsedState), for: .touchUpInside)
 
+        // Close button
         let closeButton = UIButton(type: .system)
         closeButton.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
         closeButton.tintColor = .secondaryLabel
@@ -117,18 +151,33 @@ extension MapViewController {
         closeButton.addTarget(self, action: #selector(closeStopsPanel), for: .touchUpInside)
 
         header.addSubview(titleLabel)
+        header.addSubview(infoButton)
+        header.addSubview(clearAllButton)
         header.addSubview(collapseButton)
         header.addSubview(closeButton)
 
         NSLayoutConstraint.activate([
+            // Title label
             titleLabel.centerYAnchor.constraint(equalTo: header.centerYAnchor),
             titleLabel.leadingAnchor.constraint(equalTo: header.leadingAnchor, constant: 16),
 
+            // Info button (next to title)
+            infoButton.centerYAnchor.constraint(equalTo: header.centerYAnchor),
+            infoButton.leadingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: 8),
+            infoButton.widthAnchor.constraint(equalToConstant: 24),
+            infoButton.heightAnchor.constraint(equalToConstant: 24),
+
+            // Clear All button (second row, below title)
+            clearAllButton.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            clearAllButton.leadingAnchor.constraint(equalTo: header.leadingAnchor, constant: 16),
+
+            // Collapse button
             collapseButton.centerYAnchor.constraint(equalTo: header.centerYAnchor),
             collapseButton.trailingAnchor.constraint(equalTo: closeButton.leadingAnchor, constant: -8),
             collapseButton.widthAnchor.constraint(equalToConstant: 30),
             collapseButton.heightAnchor.constraint(equalToConstant: 30),
 
+            // Close button
             closeButton.centerYAnchor.constraint(equalTo: header.centerYAnchor),
             closeButton.trailingAnchor.constraint(equalTo: header.trailingAnchor, constant: -16),
             closeButton.widthAnchor.constraint(equalToConstant: 30),
@@ -191,6 +240,52 @@ extension MapViewController {
             } completion: { _ in
                 self.stopsPanel.isHidden = true
             }
+        }
+    }
+
+    @objc func showStopsInfoAlert() {
+        // Info alert explaining saved destinations feature
+        let alert = UIAlertController(
+            title: "Saved Destinations",
+            message: "Your destinations stay on the map so you can plan multi-stop routes. They persist even after closing the app.\n\n• Tap + to add stops\n• Swipe left to delete individual stops\n• Tap 'Clear All' to remove all destinations\n• Tap 'Optimize Route' to find the best order",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Got it!", style: .default))
+        present(alert, animated: true)
+    }
+
+    @objc func clearAllStopsTapped() {
+        // Confirmation dialog before clearing all stops
+        let alert = UIAlertController(
+            title: "Clear All Destinations?",
+            message: "This will remove all \(stops.count) saved destinations from your route.",
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Clear All", style: .destructive) { [weak self] _ in
+            self?.performClearAllStops()
+        })
+
+        present(alert, animated: true)
+    }
+
+    private func performClearAllStops() {
+        // Animate out markers
+        UIView.animate(withDuration: 0.3, animations: {
+            self.stopAnnotationManager?.annotations = []
+        }) { _ in
+            // Clear all stops
+            self.stops.removeAll()
+            self.stopsTableView.reloadData()
+            self.updateStopsPanelHeader()
+            self.updateAddStopButtonBadge()
+            self.updateEmptyState()
+            self.clearRoute()
+
+            // Show success feedback
+            self.showTemporaryToast(message: "All destinations cleared")
+            print("🗑️ Cleared all saved destinations")
         }
     }
 
@@ -262,9 +357,15 @@ extension MapViewController {
         stops.append(stop)
         stopsTableView.reloadData()
         updateStopMarkers()
+        updateStopsPanelHeader()
+        updateAddStopButtonBadge()
+        updateEmptyState()
 
         // Calculate route through all stops
         calculateMultiStopRoute()
+
+        // Show success feedback
+        showTemporaryToast(message: "Destination added to route")
     }
 
     func removeStop(at index: Int) {
@@ -272,6 +373,9 @@ extension MapViewController {
         stops.remove(at: index)
         stopsTableView.reloadData()
         updateStopMarkers()
+        updateStopsPanelHeader()
+        updateAddStopButtonBadge()
+        updateEmptyState()
 
         if !stops.isEmpty {
             calculateMultiStopRoute()
@@ -359,6 +463,99 @@ extension MapViewController {
             )
 
             numberString.draw(in: textRect, withAttributes: attributes)
+        }
+    }
+
+    // MARK: - UI Update Helpers
+
+    func updateStopsPanelHeader() {
+        // Update title label with count
+        if let header = stopsPanel.viewWithTag(1000),
+           let titleLabel = header.viewWithTag(1001) as? UILabel {
+            let count = stops.count
+            titleLabel.text = count > 0 ? "Saved Destinations (\(count))" : "Saved Destinations"
+        }
+
+        // Update Clear All button visibility
+        if let header = stopsPanel.viewWithTag(1000),
+           let clearAllButton = header.viewWithTag(1002) as? UIButton {
+            UIView.animate(withDuration: 0.2) {
+                clearAllButton.isHidden = self.stops.isEmpty
+            }
+        }
+    }
+
+    func updateAddStopButtonBadge() {
+        // Remove existing badge
+        addStopButton.subviews.first { $0.tag == 9999 }?.removeFromSuperview()
+
+        guard !stops.isEmpty else { return }
+
+        // Create badge label
+        let badge = UILabel()
+        badge.tag = 9999
+        badge.text = "\(stops.count)"
+        badge.font = .systemFont(ofSize: 12, weight: .bold)
+        badge.textColor = .white
+        badge.backgroundColor = .systemOrange
+        badge.textAlignment = .center
+        badge.layer.cornerRadius = 10
+        badge.clipsToBounds = true
+        badge.translatesAutoresizingMaskIntoConstraints = false
+
+        addStopButton.addSubview(badge)
+
+        NSLayoutConstraint.activate([
+            badge.topAnchor.constraint(equalTo: addStopButton.topAnchor, constant: -4),
+            badge.trailingAnchor.constraint(equalTo: addStopButton.trailingAnchor, constant: 4),
+            badge.widthAnchor.constraint(greaterThanOrEqualToConstant: 20),
+            badge.heightAnchor.constraint(equalToConstant: 20)
+        ])
+    }
+
+    func showTemporaryToast(message: String) {
+        // Create toast label
+        let toast = UILabel()
+        toast.text = message
+        toast.font = .systemFont(ofSize: 14, weight: .medium)
+        toast.textColor = .white
+        toast.textAlignment = .center
+        toast.backgroundColor = UIColor.black.withAlphaComponent(0.8)
+        toast.layer.cornerRadius = 20
+        toast.clipsToBounds = true
+        toast.translatesAutoresizingMaskIntoConstraints = false
+        toast.alpha = 0
+
+        view.addSubview(toast)
+
+        NSLayoutConstraint.activate([
+            toast.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            toast.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -100),
+            toast.widthAnchor.constraint(greaterThanOrEqualToConstant: 200),
+            toast.heightAnchor.constraint(equalToConstant: 40)
+        ])
+
+        // Animate in
+        UIView.animate(withDuration: 0.3, animations: {
+            toast.alpha = 1
+        }) { _ in
+            // Animate out after 2 seconds
+            UIView.animate(withDuration: 0.3, delay: 2.0, options: [], animations: {
+                toast.alpha = 0
+            }) { _ in
+                toast.removeFromSuperview()
+            }
+        }
+    }
+
+    func updateEmptyState() {
+        let isEmpty = stops.isEmpty
+
+        // Show/hide empty state with animation
+        UIView.animate(withDuration: 0.3) {
+            self.emptyStateView.isHidden = !isEmpty
+            self.stopsTableView.isHidden = isEmpty
+            self.optimizeButton.isHidden = isEmpty
         }
     }
 

@@ -182,6 +182,54 @@ class MapViewController: UIViewController {
         return table
     }()
 
+    lazy var emptyStateView: UIView = {
+        let container = UIView()
+        container.backgroundColor = .clear
+        container.translatesAutoresizingMaskIntoConstraints = false
+        container.isHidden = true
+
+        let iconImageView = UIImageView(image: UIImage(systemName: "map"))
+        iconImageView.tintColor = .secondaryLabel
+        iconImageView.contentMode = .scaleAspectFit
+        iconImageView.translatesAutoresizingMaskIntoConstraints = false
+
+        let titleLabel = UILabel()
+        titleLabel.text = "No Saved Destinations"
+        titleLabel.font = .systemFont(ofSize: 18, weight: .semibold)
+        titleLabel.textColor = .secondaryLabel
+        titleLabel.textAlignment = .center
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        let messageLabel = UILabel()
+        messageLabel.text = "Tap + to add stops to your route"
+        messageLabel.font = .systemFont(ofSize: 14, weight: .regular)
+        messageLabel.textColor = .tertiaryLabel
+        messageLabel.textAlignment = .center
+        messageLabel.numberOfLines = 0
+        messageLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        container.addSubview(iconImageView)
+        container.addSubview(titleLabel)
+        container.addSubview(messageLabel)
+
+        NSLayoutConstraint.activate([
+            iconImageView.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            iconImageView.centerYAnchor.constraint(equalTo: container.centerYAnchor, constant: -40),
+            iconImageView.widthAnchor.constraint(equalToConstant: 60),
+            iconImageView.heightAnchor.constraint(equalToConstant: 60),
+
+            titleLabel.topAnchor.constraint(equalTo: iconImageView.bottomAnchor, constant: 16),
+            titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
+            titleLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
+
+            messageLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8),
+            messageLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
+            messageLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20)
+        ])
+
+        return container
+    }()
+
     lazy var optimizeButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("🎯 Optimize Route", for: .normal)
