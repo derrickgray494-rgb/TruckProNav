@@ -23,25 +23,36 @@
 
 ## What Was Changed
 
-- **LoginViewController.swift** now has:
+- **LoginView.swift** (SwiftUI) now has:
   - Background image view (`truck_background` from Assets)
-  - Dark overlay (40% opacity) for better text readability
-  - White text labels and title
-  - Semi-transparent white text fields
+  - Dark overlay (45% opacity) for better text readability
+  - White text labels and title with shadow effects
+  - Custom text fields with icons and focus states
+  - Gradient sign in button (orange to steel blue)
   - All UI elements are visible on the dark truck background
 
 ## Customization Options
 
-If you want to adjust the overlay darkness, edit this line in `LoginViewController.swift` (line 24):
+If you want to adjust the overlay darkness, edit this line in `LoginView.swift`:
 
 ```swift
-view.backgroundColor = UIColor.black.withAlphaComponent(0.4)
+.overlay(Color.black.opacity(0.45)) // dark overlay for contrast
 ```
 
-Change `0.4` to:
+Change `0.45` to:
 - `0.3` = Lighter overlay (more image visible)
 - `0.5` = Darker overlay (better text contrast)
 - `0.6` = Very dark overlay
+
+### Color Customization
+
+The login screen uses custom accent colors:
+```swift
+private let accent = Color(red: 0.85, green: 0.25, blue: 0.2) // orange-red
+private let steelBlue = Color(red: 0.10, green: 0.17, blue: 0.25)
+```
+
+You can adjust these colors to match your branding.
 
 ## Troubleshooting
 
@@ -53,8 +64,10 @@ Change `0.4` to:
 
 **If text is hard to read:**
 - Increase the overlay darkness (see Customization Options above)
-- Or edit the backgroundImageView contentMode in code to `contentMode = .scaleAspectFit` if you want to see more of the image
+- Or change `.scaledToFill()` to `.scaledToFit()` if you want to see more of the image
 
 ---
 
-✅ **Build Status:** Successful - Ready to add image and test!
+✅ **Build Status:** Successful - SwiftUI login screen ready!
+
+**Design:** Modern SwiftUI with custom components and gradient buttons
