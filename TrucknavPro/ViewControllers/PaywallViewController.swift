@@ -155,23 +155,43 @@ class PaywallViewController: UIViewController {
     // MARK: - Load Offerings
 
     private func loadOfferings() {
+        print("🔄 Starting to load offerings from RevenueCat...")
+
+        // Invalidate cache to fetch fresh offerings
+        Purchases.shared.invalidateCustomerInfoCache()
+        print("🗑️ Cache invalidated, fetching fresh offerings...")
+
         Task {
             do {
                 offerings = try await RevenueCatService.shared.getOfferings()
-                displayPackages()
+                print("✅ Offerings loaded successfully")
+                print("📦 Total offerings: \(offerings?.all.count ?? 0)")
+                print("📦 Available offerings: \(offerings?.all.keys.joined(separator: ", ") ?? "none")")
+                print("📦 Current offering: \(offerings?.current?.identifier ?? "not set")")
+
+                await MainActor.run {
+                    displayPackages()
+                }
             } catch {
                 print("❌ Error loading offerings: \(error)")
-                showError("Unable to load subscription options. Please try again later.")
+                print("❌ Error details: \(error.localizedDescription)")
+                await MainActor.run {
+                    showError("Unable to load subscription options. Please try again later.\n\nError: \(error.localizedDescription)")
+                }
             }
         }
     }
 
     private func displayPackages() {
+        print("📱 displayPackages() called")
+
         guard let offerings = offerings else {
             print("❌ No offerings available")
             showError("No subscription options available. Please check your RevenueCat configuration.")
             return
         }
+
+        print("✅ Offerings object exists")
 
         guard let current = offerings.current else {
             print("❌ No current offering set in RevenueCat")
@@ -182,26 +202,34 @@ class PaywallViewController: UIViewController {
                 print("ℹ️ Using first available offering: \(firstOffering.identifier)")
                 displayPackagesFromOffering(firstOffering)
             } else {
+                print("❌ No offerings at all in RevenueCat!")
                 showError("No current offering is set in RevenueCat. Please set a 'current' offering in your RevenueCat dashboard.")
             }
             return
         }
 
+        print("✅ Current offering found: \(current.identifier)")
         displayPackagesFromOffering(current)
     }
 
     private func displayPackagesFromOffering(_ offering: Offering) {
+        print("📦 displayPackagesFromOffering() called for: \(offering.identifier)")
+
         // Clear existing package views
         packageStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        print("🗑️ Cleared existing package views")
+
+        print("📦 Available packages count: \(offering.availablePackages.count)")
 
         guard !offering.availablePackages.isEmpty else {
-            print("❌ No packages available in offering")
+            print("❌ No packages available in offering '\(offering.identifier)'")
             showError("No subscription packages available. Please configure products in RevenueCat.")
             return
         }
 
         // Add package cards
-        for package in offering.availablePackages {
+        for (index, package) in offering.availablePackages.enumerated() {
+            print("➕ Adding package \(index + 1): \(package.storeProduct.localizedTitle) - \(package.storeProduct.localizedPriceString)")
             let packageView = createPackageView(for: package)
             packageStackView.addArrangedSubview(packageView)
         }

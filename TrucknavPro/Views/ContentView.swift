@@ -28,8 +28,8 @@ struct ContentView: View {
                     .ignoresSafeArea()
                 }
             } else {
-                // Login screen - authentication REQUIRED
-                LoginView()
+                // Login screen - authentication REQUIRED - TRON EDITION
+                LaunchView_Tron()
                     .ignoresSafeArea()
             }
         }

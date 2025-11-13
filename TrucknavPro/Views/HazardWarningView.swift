@@ -11,7 +11,6 @@ enum HazardType {
     case widthRestriction(width: Double, unit: String)
     case lengthRestriction(length: Double, unit: String)
     case tunnelRestriction
-    case sharpTurn
     case steepGrade(percent: Double)
 
     var icon: String {
@@ -21,7 +20,6 @@ enum HazardType {
         case .widthRestriction: return "⚠️"
         case .lengthRestriction: return "⚠️"
         case .tunnelRestriction: return "🚫"
-        case .sharpTurn: return "↪️"
         case .steepGrade: return "⛰️"
         }
     }
@@ -33,7 +31,6 @@ enum HazardType {
         case .widthRestriction: return "WIDTH RESTRICTION AHEAD"
         case .lengthRestriction: return "LENGTH RESTRICTION AHEAD"
         case .tunnelRestriction: return "TUNNEL RESTRICTION AHEAD"
-        case .sharpTurn: return "SHARP TURN AHEAD"
         case .steepGrade: return "STEEP GRADE AHEAD"
         }
     }
@@ -112,9 +109,6 @@ enum HazardType {
 
         case .tunnelRestriction:
             return "Tunnel restrictions apply - Check clearance and hazmat regulations"
-
-        case .sharpTurn:
-            return "Sharp turn ahead - Reduce speed and use caution"
 
         case .steepGrade(let percent):
             return "Steep grade: \(String(format: "%.1f", percent))% - Use appropriate gear"

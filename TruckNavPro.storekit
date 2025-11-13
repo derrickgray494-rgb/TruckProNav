@@ -1,0 +1,132 @@
+{
+  "identifier" : "82B7C4D2",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Load Products"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Purchase"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Verification"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Transaction"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Manage Subscriptions Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Refund Request Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Offer Code Redeem Sheet"
+      }
+    ]
+  },
+  "subscriptions" : [
+    {
+      "adHocOffers" : [
+
+      ],
+      "codeOffers" : [
+
+      ],
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "groupNumber" : 1,
+      "internalID" : "6738495001",
+      "introductoryOffer" : null,
+      "localizations" : [
+        {
+          "description" : "Weekly access to TruckNav Pro features",
+          "displayName" : "TruckNav Pro Weekly",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "pro_weekly1",
+      "recurringSubscriptionPeriod" : "P1W",
+      "referenceName" : "Pro Weekly",
+      "subscriptionGroupID" : "21532960",
+      "type" : "RecurringSubscription"
+    },
+    {
+      "adHocOffers" : [
+
+      ],
+      "codeOffers" : [
+
+      ],
+      "displayPrice" : "14.99",
+      "familyShareable" : false,
+      "groupNumber" : 1,
+      "internalID" : "6738495002",
+      "introductoryOffer" : null,
+      "localizations" : [
+        {
+          "description" : "Monthly access to TruckNav Pro features",
+          "displayName" : "TruckNav Pro Monthly",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "pro_monthly1",
+      "recurringSubscriptionPeriod" : "P1M",
+      "referenceName" : "Pro Monthly",
+      "subscriptionGroupID" : "21532960",
+      "type" : "RecurringSubscription"
+    },
+    {
+      "adHocOffers" : [
+
+      ],
+      "codeOffers" : [
+
+      ],
+      "displayPrice" : "99.99",
+      "familyShareable" : false,
+      "groupNumber" : 1,
+      "internalID" : "6738495003",
+      "introductoryOffer" : null,
+      "localizations" : [
+        {
+          "description" : "Yearly access to TruckNav Pro features with best value",
+          "displayName" : "TruckNav Pro Yearly",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "pro_yearly1",
+      "recurringSubscriptionPeriod" : "P1Y",
+      "referenceName" : "Pro Yearly",
+      "subscriptionGroupID" : "21532960",
+      "type" : "RecurringSubscription"
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

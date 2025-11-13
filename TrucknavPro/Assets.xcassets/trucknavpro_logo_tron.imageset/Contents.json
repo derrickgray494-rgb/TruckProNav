@@ -5,22 +5,13 @@
       "scale" : "1x"
     },
     {
-      "filename" : "truck_background.png",
+      "filename" : "trucknavpro_logo_tron.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
       "idiom" : "universal",
       "scale" : "3x"
-    },
-    {
-      "filename" : "ChatGPT Image Nov 12, 2025, 05_59_33 PM.png",
-      "idiom" : "ipad",
-      "scale" : "1x"
-    },
-    {
-      "idiom" : "ipad",
-      "scale" : "2x"
     }
   ],
   "info" : {

@@ -88,9 +88,6 @@ class HazardMonitoringService {
 
         // Check for OSM restrictions
         checkOSMRestrictions(for: upcomingSegment, from: location)
-
-        // Check for geometric hazards (sharp turns)
-        checkRouteGeometry(segment: upcomingSegment, from: location)
     }
 
     private func getUpcomingRouteSegment(from location: CLLocationCoordinate2D, route: [CLLocationCoordinate2D], lookAheadDistance: Double) -> [CLLocationCoordinate2D] {
@@ -211,40 +208,6 @@ class HazardMonitoringService {
         return minDistance < 200 ? closestPoint : nil
     }
 
-    private func checkRouteGeometry(segment: [CLLocationCoordinate2D], from location: CLLocation) {
-        guard segment.count >= 3 else { return }
-
-        // Check for sharp turns (simplified)
-        for i in 1..<min(segment.count - 1, 10) { // Check next 10 points
-            let bearing1 = segment[i - 1].bearing(to: segment[i])
-            let bearing2 = segment[i].bearing(to: segment[i + 1])
-            let turnAngle = abs(bearing2 - bearing1)
-
-            // Normalize angle to 0-180
-            let normalizedAngle = min(turnAngle, 360 - turnAngle)
-
-            if normalizedAngle > 90 { // Sharp turn detected
-                let distanceToTurn = location.coordinate.distance(to: segment[i])
-
-                if distanceToTurn < 1000 && distanceToTurn > 50 { // Within 1km but not immediate
-                    let alert = HazardAlert(
-                        type: .sharpTurn,
-                        distanceInMeters: distanceToTurn,
-                        location: nil
-                    )
-                    onHazardDetected?(alert)
-                    print("🚨 Sharp turn detected at \(distanceToTurn)m ahead")
-                    return // Only report one hazard at a time
-                }
-            }
-        }
-
-        // In production, you would:
-        // 1. Query TomTom Traffic API for restrictions along segment
-        // 2. Parse bridge clearances, weight limits, width restrictions
-        // 3. Compare against truck dimensions from TruckSettings
-        // 4. Generate appropriate HazardAlert
-    }
 
     // MARK: - TomTom API Integration (Placeholder)
 
