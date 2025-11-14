@@ -242,6 +242,19 @@ class MapViewController: UIViewController {
         return button
     }()
 
+    // MARK: - Memory Management
+
+    deinit {
+        // Clean up keyboard observers to prevent memory leaks
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
+
+        // Clean up traffic timer
+        trafficUpdateTimer?.invalidate()
+
+        print("🧹 MapViewController deallocated - observers cleaned up")
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
 

@@ -18,6 +18,15 @@ private struct AssociatedKeys {
 
 extension MapViewController {
 
+    // MARK: - Memory Management
+
+    // Note: deinit is called on the main MapViewController class, not the extension
+    // We handle cleanup there, but adding this comment for clarity
+
+    // To properly clean up keyboard observers, add this to MapViewController.swift deinit:
+    // NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+    // NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
+
     // MARK: - Custom Search Bar Setup
 
     func setupCustomSearchBar() {

@@ -12,6 +12,10 @@ class TomTomSearchService {
     private let apiKey: String
     private let baseURL = "https://api.tomtom.com/search/2"
 
+    // Track current search task to prevent race conditions
+    private var currentSearchTask: URLSessionDataTask?
+    private var currentCategoryTask: URLSessionDataTask?
+
     // Truck-specific POI categories
     enum TruckCategory: Int, CaseIterable {
         case truckStop = 7315
@@ -94,7 +98,10 @@ class TomTomSearchService {
         print("🔍 TomTom Fuzzy Search: \(category.displayName) (\(queryTerm)) near \(coordinate)")
         print("🌐 URL: \(url.absoluteString)")
 
-        URLSession.shared.dataTask(with: url) { data, response, error in
+        // Cancel previous category search to prevent race conditions
+        currentCategoryTask?.cancel()
+
+        let task = URLSession.shared.dataTask(with: url) { data, response, error in
             if let error = error {
                 print("❌ Network error: \(error.localizedDescription)")
                 completion(.failure(error))
@@ -145,7 +152,11 @@ class TomTomSearchService {
                 }
                 completion(.failure(error))
             }
-        }.resume()
+        }
+
+        // Store and resume task
+        currentCategoryTask = task
+        task.resume()
     }
 
     // Get search query term for category
@@ -181,7 +192,10 @@ class TomTomSearchService {
         print("🔍 TomTom Fuzzy Search: '\(query)' near \(coordinate)")
         print("🌐 URL: \(url.absoluteString)")
 
-        URLSession.shared.dataTask(with: url) { data, response, error in
+        // Cancel previous text search to prevent race conditions
+        currentSearchTask?.cancel()
+
+        let task = URLSession.shared.dataTask(with: url) { data, response, error in
             if let error = error {
                 print("❌ Network error: \(error.localizedDescription)")
                 completion(.failure(error))
@@ -232,7 +246,11 @@ class TomTomSearchService {
                 }
                 completion(.failure(error))
             }
-        }.resume()
+        }
+
+        // Store and resume task
+        currentSearchTask = task
+        task.resume()
     }
 }
 

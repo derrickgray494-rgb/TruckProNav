@@ -14,6 +14,9 @@ class HERESearchService {
     private let discoverURL = "https://discover.search.hereapi.com/v1"
     private let browseURL = "https://browse.search.hereapi.com/v1"
 
+    // Track current search task to prevent race conditions
+    private var currentSearchTask: URLSessionDataTask?
+
     // Truck-specific POI categories (mapped from TomTom)
     enum TruckCategory: String, CaseIterable {
         case truckStop = "700-7600-0116"        // Truck Stop
@@ -81,7 +84,10 @@ class HERESearchService {
         print("🔍 HERE Discover Search (POI): '\(query)' near \(coordinate)")
         print("🌐 URL: \(url.absoluteString)")
 
-        URLSession.shared.dataTask(with: url) { data, response, error in
+        // Cancel previous search to prevent race conditions
+        currentSearchTask?.cancel()
+
+        let task = URLSession.shared.dataTask(with: url) { data, response, error in
             if let error = error {
                 print("❌ HERE Search network error: \(error.localizedDescription)")
                 completion(.failure(error))
@@ -146,7 +152,11 @@ class HERESearchService {
                 }
                 completion(.failure(error))
             }
-        }.resume()
+        }
+
+        // Store and resume task
+        currentSearchTask = task
+        task.resume()
     }
 
     // MARK: - Category Search
