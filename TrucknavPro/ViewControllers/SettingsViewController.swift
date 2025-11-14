@@ -411,8 +411,9 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
                     // Reset welcome screen flag so they see it again on next login
                     UserDefaults.standard.removeObject(forKey: "hasSeenWelcome")
 
-                    // Reload settings to update UI
-                    tableView.reloadData()
+                    // Reload only account section to update UI (more efficient than reloadData)
+                    let accountSection = SettingsSection.account.rawValue
+                    tableView.reloadSections(IndexSet(integer: accountSection), with: .automatic)
 
                     // Show success message
                     showSuccessAlert("Successfully signed out")

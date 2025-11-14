@@ -249,6 +249,10 @@ class MapViewController: UIViewController {
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
 
+        // Clean up background observers
+        NotificationCenter.default.removeObserver(self, name: UIApplication.didEnterBackgroundNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIApplication.willEnterForegroundNotification, object: nil)
+
         // Clean up traffic timer
         trafficUpdateTimer?.invalidate()
 
@@ -257,6 +261,21 @@ class MapViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+
+        // Setup background observers to pause traffic updates when app is backgrounded
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appDidEnterBackground),
+            name: UIApplication.didEnterBackgroundNotification,
+            object: nil
+        )
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appWillEnterForeground),
+            name: UIApplication.willEnterForegroundNotification,
+            object: nil
+        )
 
         // Initialize Mapbox Navigation Provider (v3)
         let coreConfig = CoreConfig()
@@ -867,6 +886,22 @@ class MapViewController: UIViewController {
         trafficUpdateTimer = nil
         incidentAnnotationManager?.annotations = []
         print("🚦 Traffic updates stopped")
+    }
+
+    // MARK: - Background Handling
+
+    @objc private func appDidEnterBackground() {
+        // Stop traffic updates to save battery when app is in background
+        trafficUpdateTimer?.invalidate()
+        print("⏸️ App entered background - traffic timer paused")
+    }
+
+    @objc private func appWillEnterForeground() {
+        // Restart traffic updates when app returns to foreground
+        if trafficUpdateTimer != nil {
+            startTrafficUpdates()
+            print("▶️ App entering foreground - traffic timer resumed")
+        }
     }
 
     private func updateTrafficIncidents() {

@@ -7,6 +7,9 @@ import UIKit
 
 class WeatherWidgetView: UIView {
 
+    // Cache for SF Symbol images to avoid recreating them on every update
+    private static let imageCache = NSCache<NSString, UIImage>()
+
     private let containerView: UIView = {
         let view = UIView()
         view.backgroundColor = UIColor.black.withAlphaComponent(0.75)
@@ -101,7 +104,7 @@ class WeatherWidgetView: UIView {
 
         // Show default placeholder until weather data loads
         temperatureLabel.text = "--°"
-        weatherIcon.image = UIImage(systemName: "cloud.sun.fill")
+        weatherIcon.image = getCachedSymbol("cloud.sun.fill")
         dayLabel.text = "Loading..."
         conditionLabel.text = ""
         highLowLabel.text = ""
@@ -109,9 +112,29 @@ class WeatherWidgetView: UIView {
 
     func configure(with weatherInfo: WeatherInfo) {
         temperatureLabel.text = "\(weatherInfo.temperature)°"
-        weatherIcon.image = UIImage(systemName: weatherInfo.symbolName)
+        weatherIcon.image = getCachedSymbol(weatherInfo.symbolName)
         dayLabel.text = weatherInfo.dayName
         conditionLabel.text = weatherInfo.condition
         highLowLabel.text = "H:\(weatherInfo.high)° L:\(weatherInfo.low)°"
+    }
+
+    // MARK: - Image Caching
+
+    /// Get SF Symbol from cache or create and cache it
+    private func getCachedSymbol(_ name: String) -> UIImage? {
+        let key = name as NSString
+
+        // Check cache first
+        if let cachedImage = WeatherWidgetView.imageCache.object(forKey: key) {
+            return cachedImage
+        }
+
+        // Create and cache the image
+        if let image = UIImage(systemName: name) {
+            WeatherWidgetView.imageCache.setObject(image, forKey: key)
+            return image
+        }
+
+        return nil
     }
 }
