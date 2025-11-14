@@ -157,6 +157,13 @@ class PaywallViewController: UIViewController {
     private func loadOfferings() {
         print("🔄 Starting to load offerings from RevenueCat...")
 
+        // Check if RevenueCat is configured
+        guard RevenueCatService.shared.isConfigured else {
+            print("❌ RevenueCat is not configured - cannot load offerings")
+            showError("Subscription features are currently unavailable.\n\nPlease contact support if this issue persists.")
+            return
+        }
+
         // Invalidate cache to fetch fresh offerings
         Purchases.shared.invalidateCustomerInfoCache()
         print("🗑️ Cache invalidated, fetching fresh offerings...")
@@ -342,6 +349,12 @@ class PaywallViewController: UIViewController {
     }
 
     @objc private func restoreTapped() {
+        // Check if RevenueCat is configured
+        guard RevenueCatService.shared.isConfigured else {
+            showError("Subscription features are currently unavailable.\n\nPlease contact support if this issue persists.")
+            return
+        }
+
         restoreButton.isEnabled = false
         restoreButton.setTitle("Restoring...", for: .normal)
 

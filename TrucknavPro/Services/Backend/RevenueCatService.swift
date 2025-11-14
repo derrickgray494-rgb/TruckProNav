@@ -69,6 +69,9 @@ class RevenueCatService {
 
     static let shared = RevenueCatService()
 
+    // Track if RevenueCat was successfully configured
+    private(set) var isConfigured: Bool = false
+
     // Current subscription tier
     private(set) var currentTier: SubscriptionTier = .free
 
@@ -85,11 +88,14 @@ class RevenueCatService {
         // Load RevenueCat API key from Info.plist
         guard let apiKey = Bundle.main.infoDictionary?["RevenueCatAPIKey"] as? String else {
             print("⚠️ RevenueCat API key not found in Info.plist")
+            print("⚠️ RevenueCat will NOT be configured - subscription features unavailable")
+            isConfigured = false
             return
         }
 
         Purchases.logLevel = .debug
         Purchases.configure(withAPIKey: apiKey)
+        isConfigured = true
 
         // Set user ID if logged in
         Task {

@@ -441,6 +441,13 @@ class SettingsViewController: UIViewController, UITableViewDelegate, UITableView
         case 1:
             // Restore purchases
             print("🔄 Restoring purchases")
+
+            // Check if RevenueCat is configured
+            guard RevenueCatService.shared.isConfigured else {
+                showErrorAlert("Subscription features are currently unavailable.\n\nPlease contact support if this issue persists.")
+                return
+            }
+
             Task {
                 do {
                     _ = try await RevenueCatService.shared.restorePurchases()
